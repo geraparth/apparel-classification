@@ -1,2 +1,2 @@
-x = 3
-print(x)
+y = 3
+print(y)
