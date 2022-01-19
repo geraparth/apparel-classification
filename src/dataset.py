@@ -42,5 +42,3 @@ class LoadDataset:
         data_x, data_y = self.read_image(image_urls, dataset_type)
         return data_x, data_y
 
-x = LoadDataset()
-data_X, data_y = x.get_dataset('test')
