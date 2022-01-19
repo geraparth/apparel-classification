@@ -1,18 +1,17 @@
 import config.config as opt
-import tqdm
+from tqdm import tqdm
 import os
 import numpy as np
 import pandas as pd
 from skimage.io import imread
 
-class Load_Dataset():
 
-    def __init__(self):
+class LoadDataset:
 
+    #def __init__(self):
+    def read_image(self, image_urls, dataset_type='train'):
 
-    def read_image(self,image_urls, type = 'train'):
-
-        if(type=='train'):
+        if dataset_type == 'train':
             image_path = os.path.join(opt.data_root, opt.train_images)
         else:
             image_path = os.path.join(opt.data_root, opt.test_images)
@@ -31,31 +30,17 @@ class Load_Dataset():
 
         return data_x, data_y
 
-    def get_dataset(self, type = 'train'):
+    def get_dataset(self, dataset_type='train'):
 
-        if(type=='train'):
+        if dataset_type == 'train':
 
-            self.image_urls = list(pd.read_csv(os.path.join(opt.data_root, opt.train_images, '.csv'))['id'])
+            image_urls = list(pd.read_csv(os.path.join(opt.data_root, opt.train_images) + '.csv')['id'])
 
         else:
-            self.image_urls = list(pd.read_csv(os.path.join(opt.data_root,opt.test_images, '.csv'))['id'])
+            image_urls = list(pd.read_csv(os.path.join(opt.data_root, opt.test_images) + '.csv')['id'])
 
+        data_x, data_y = self.read_image(image_urls, dataset_type)
+        return data_x, data_y
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+x = LoadDataset()
+data_X, data_y = x.get_dataset('test')
