@@ -8,6 +8,9 @@ from src.network import CNNNetwork
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 import torch
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+import numpy as np
 
 
 class ModelTrain:
@@ -17,6 +20,12 @@ class ModelTrain:
         self.model = None
         self.train_losses = []
         self.val_losses = []
+        self.train_x = None
+        self.train_y = None
+        self.val_x = None
+        self.val_y = None
+        self.train_accuracy = None
+        self.val_accuracy = None
 
     def fit(self):
 
@@ -65,6 +74,57 @@ class ModelTrain:
 
             if opt.n_epochs % 2 == 0:
                 print('Epoch: ', opt.n_epochs + 1, '\t', 'Training Loss: ', loss_train.detach().numpy(), '\t', 'Validation Loss: ', loss_val.detach().numpy())
+
+    def plot_loss_curve(self):
+
+        plt.plot(self.train_losses, label='Training Loss')
+        plt.plot(self.val_losses, label='Validation Loss')
+        plt.legend()
+        plt.show()
+
+    def get_train_accuracy(self):
+
+        with torch.no_grad():
+            output = self.model.forward_pass(self.train_x)
+
+        softmax = torch.exp(output).cpu()
+        prob = list(softmax.numpy())
+        predictions = np.argmax(prob, axis=1)
+
+        self.train_accuracy = accuracy_score(self.train_y, predictions)
+
+    def get_val_accuracy(self):
+
+        with torch.no_grad():
+            output = self.model.forward_pass(self.val_x)
+
+        softmax = torch.exp(output).cpu()
+        prob = list(softmax.numpy())
+        predictions = np.argmax(prob, axis=1)
+
+        self.val_accuracy = accuracy_score(self.val_y, predictions)
+
+    def get_test_result(self):
+
+        x = LoadDataset()
+        data_x, data_y = x.get_dataset('test')
+        test_x = utils.convert_x_to_torch(data_x)
+        test_y = utils.convert_y_to_torch(data_y)
+
+        with torch.no_grad():
+            output = self.model.forward_pass(test_x)
+
+        softmax = torch.exp(output).cpu()
+        prob = list(softmax.numpy())
+        predictions = np.argmax(prob, axis=1)
+
+        sample_submission['label'] = predictions
+        sample_submission.head()
+
+        sample_submission.to_csv('Predictions/submission.csv', index=False)
+
+
+
 
 
 
