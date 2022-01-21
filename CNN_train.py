@@ -11,6 +11,9 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
 import numpy as np
+import pandas as pd
+import os
+from datetime import date
 
 
 class ModelTrain:
@@ -26,16 +29,17 @@ class ModelTrain:
         self.val_y = None
         self.train_accuracy = None
         self.val_accuracy = None
+        self.sample_submission = pd.read_csv(os.path.join(opt.data_root, opt.submission))
 
     def fit(self):
 
         x = LoadDataset()
         data_x, data_y = x.get_dataset('train')
         np_train_x, np_val_x, np_train_y, np_val_y = utils.split_data(data_x, data_y, 0.2)
-        train_x = utils.convert_x_to_torch(np_train_x)
-        train_y = utils.convert_y_to_torch(np_train_y)
-        val_x = utils.convert_x_to_torch(np_val_x)
-        val_y = utils.convert_y_to_torch(np_val_y)
+        self.train_x = utils.convert_x_to_torch(np_train_x)
+        self.train_y = utils.convert_y_to_torch(np_train_y)
+        self.val_x = utils.convert_x_to_torch(np_val_x)
+        self.val_y = utils.convert_y_to_torch(np_val_y)
 
         self.model = CNNNetwork()
         optimizer = Adam(self.model.parameters(), opt.learning_rate)
@@ -48,8 +52,8 @@ class ModelTrain:
         for i in range(opt.n_epochs):
 
             self.model.train()
-            x_train, y_train = Variable(train_x), Variable(train_y)
-            x_val, y_val = Variable(val_x), Variable(val_y)
+            x_train, y_train = Variable(self.train_x), Variable(self.train_y)
+            x_val, y_val = Variable(self.val_x), Variable(self.val_y)
 
             if torch.cuda.is_available():
 
@@ -72,7 +76,7 @@ class ModelTrain:
             loss_train.backward()
             optimizer.step()
 
-            if opt.n_epochs % 2 == 0:
+            if i % 2 == 0:
                 print('Epoch: ', opt.n_epochs + 1, '\t', 'Training Loss: ', loss_train.detach().numpy(), '\t', 'Validation Loss: ', loss_val.detach().numpy())
 
     def plot_loss_curve(self):
@@ -107,9 +111,8 @@ class ModelTrain:
     def get_test_result(self):
 
         x = LoadDataset()
-        data_x, data_y = x.get_dataset('test')
+        data_x = x.get_dataset('test')
         test_x = utils.convert_x_to_torch(data_x)
-        test_y = utils.convert_y_to_torch(data_y)
 
         with torch.no_grad():
             output = self.model.forward_pass(test_x)
@@ -118,14 +121,21 @@ class ModelTrain:
         prob = list(softmax.numpy())
         predictions = np.argmax(prob, axis=1)
 
-        sample_submission['label'] = predictions
-        sample_submission.head()
+        self.sample_submission['label'] = predictions
+        self.sample_submission.head()
+        self.sample_submission.to_csv(opt.prediction_root + str(date.today())+'.csv', index=False)
+        
+apparel_classification = ModelTrain()
+apparel_classification.fit()
 
-        sample_submission.to_csv('Predictions/submission.csv', index=False)
+apparel_classification.get_train_accuracy()
+apparel_classification.get_val_accuracy()
 
 
+print(apparel_classification.train_accuracy)
+print(apparel_classification.val_accuracy)
 
-
+apparel_classification.get_test_result()
 
 
 

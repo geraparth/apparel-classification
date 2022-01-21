@@ -2,9 +2,9 @@ from sklearn.model_selection import train_test_split
 import torch
 
 
-def split_data(data_x, data_y, test_size=0.2):
+def split_data(data_x, data_y, sample_size=0.2):
 
-    train_x, val_x, train_y, val_y = train_test_split(data_x, data_y, test_size)
+    train_x, val_x, train_y, val_y = train_test_split(data_x, data_y, test_size=sample_size)
     return train_x, val_x, train_y, val_y
 
 
