@@ -1,10 +1,5 @@
 
 from torch.autograd import Variable
-import config.config as opt
-from src.dataset import LoadDataset
-from src import utils
-from src.network import CNNNetwork
-
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 import torch
@@ -14,6 +9,13 @@ import numpy as np
 import pandas as pd
 import os
 from datetime import date
+
+import config.config as opt
+from src.dataset import LoadDataset
+from src import utils
+from src.network import CNNNetwork
+
+#*******************************************************
 
 
 class ModelTrain:
@@ -31,7 +33,22 @@ class ModelTrain:
         self.val_accuracy = None
         self.sample_submission = pd.read_csv(os.path.join(opt.data_root, opt.submission))
 
+#*********************************************************************
+
     def fit(self):
+        """
+            Function to fit CNN model to the training data.
+
+            Parameters: self - instance of the class
+
+
+            Returns:
+                    Saves
+                    self.model : Training model
+                    self.train_losses : list variable containing train loss for each epoch
+                    self.val_losses : list variable containing val loss for each epoch
+
+                    """
 
         x = LoadDataset()
         data_x, data_y = x.get_dataset('train')
@@ -79,14 +96,39 @@ class ModelTrain:
             if i % 2 == 0:
                 print('Epoch: ', opt.n_epochs + 1, '\t', 'Training Loss: ', loss_train.detach().numpy(), '\t', 'Validation Loss: ', loss_val.detach().numpy())
 
+#****************************************************************
     def plot_loss_curve(self):
+
+        """
+            Function to fit CNN model to the training data.
+
+            Parameters: self - instance of the class
+
+            Returns:
+                    saves train error/val loss Vs epoch graph
+
+                            """
 
         plt.plot(self.train_losses, label='Training Loss')
         plt.plot(self.val_losses, label='Validation Loss')
         plt.legend()
+        plt.savefig(opt.graph_root + str(date.today()) + '.png')
         plt.show()
 
+
+#****************************************************************
+
     def get_train_accuracy(self):
+
+        """
+            Function to calculate train accuracy of the model.
+
+            Parameters: self - instance of the class
+
+            Returns:
+                    saves train accuracy in the variable self.train_accuracy
+
+                                    """
 
         with torch.no_grad():
             output = self.model.forward_pass(self.train_x)
@@ -97,7 +139,19 @@ class ModelTrain:
 
         self.train_accuracy = accuracy_score(self.train_y, predictions)
 
+#****************************************************************
+
     def get_val_accuracy(self):
+
+        """
+        Function to calculate val accuracy of the model.
+
+        Parameters: self - instance of the class
+
+        Returns:
+                saves validation accuracy in the variable self.val_accuracy
+
+                                            """
 
         with torch.no_grad():
             output = self.model.forward_pass(self.val_x)
@@ -108,8 +162,19 @@ class ModelTrain:
 
         self.val_accuracy = accuracy_score(self.val_y, predictions)
 
+#****************************************************************
+
     def get_test_result(self):
 
+        """
+        Function to make predictions on the test and save.
+
+        Parameters: self - instance of the class
+
+        Returns:
+                saves test predictions in the file sample submission
+
+                                                    """
         x = LoadDataset()
         data_x = x.get_dataset('test')
         test_x = utils.convert_x_to_torch(data_x)
@@ -124,7 +189,24 @@ class ModelTrain:
         self.sample_submission['label'] = predictions
         self.sample_submission.head()
         self.sample_submission.to_csv(opt.prediction_root + str(date.today())+'.csv', index=False)
-        
+
+#****************************************************************
+
+    def save_model(self):
+
+        """
+        Function to save model in directory.
+
+        Parameters: self - instance of the class
+
+        Returns:
+                saves model
+
+        """
+
+        torch.save(self.model.state_dict(), os.path.join(opt.model_path,'model'+str(date.today())))
+
+
 apparel_classification = ModelTrain()
 apparel_classification.fit()
 
@@ -136,6 +218,9 @@ print(apparel_classification.train_accuracy)
 print(apparel_classification.val_accuracy)
 
 apparel_classification.get_test_result()
+
+apparel_classification.plot_loss_curve()
+apparel_classification.save_model()
 
 
 
